@@ -423,6 +423,31 @@ th{background:var(--pri2);color:var(--pri)}
   <div class="err" id="uerr"></div><div class="btns"><button class="btn" id="uadd">إضافة</button></div></div>
  <div class="card" id="utbl"><h2>المستخدمون (إعادة تعيين كلمة المرور للمدير فقط)</h2><div class="scroll"><table><thead><tr><th>الاسم</th><th>المستخدم</th><th>الصفة</th><th>الأنواع المسموحة</th><th>كلمة مرور جديدة</th><th></th></tr></thead><tbody id="urows"></tbody></table></div></div>
 </section>
+
+<section id="p-conds" hidden class="np">
+ <div class="card" id="cd_add_box" hidden style="border-color:#9db3cf">
+  <h2>＋ إضافة شرط جديد إلى قائمة الشروط لإدخاله للوثيقة (للمدير فقط)</h2>
+  <div class="grid">
+   <div><label>عنوان الشرط</label><input id="cd_title" placeholder="مثال: شرط الاستهلاكات / شرط الاستثناءات"></div>
+   <div><label>تصنيف الشرط</label><select id="cd_type"><option value="general">شروط عامة / تغطية (تُدرج في شروط الوثيقة)</option><option value="exception">شروط الاستثناءات (تُدرج في خانة الاستثناءات)</option></select></div>
+   <div><label>نطاق التطبيق (القسم)</label><select id="cd_cat"><option>الكل</option><option>تأمين السيارات</option><option>سيارات - خاص</option><option>سيارات - تجاري</option><option>سيارات - إجباري</option><option>التأمينات العامة</option></select></div>
+   <div style="grid-column:1/-1"><label>نص الشرط وتفاصيله</label><textarea id="cd_text" rows="4" placeholder="اكتب نص الشرط بالتفصيل ليظهر في تبويب الشروط للمدير والموظف ويُدرج تلقائياً في الوثائق..."></textarea></div>
+  </div>
+  <div class="err" id="cd_err"></div>
+  <div class="btns"><button class="btn" id="cd_save">💾 حفظ الشرط</button><button class="btn alt" id="cd_clr">مسح البيانات</button></div>
+ </div>
+ <div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+   <h2 style="margin:0">⚖ كافة الشروط المعتمدة في المنظومة (شروط الوثائق والاستثناءات)</h2>
+   <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <select id="cd_fcat" style="max-width:200px"><option value="">كل الأقسام</option><option>الكل</option><option>تأمين السيارات</option><option>سيارات - خاص</option><option>سيارات - تجاري</option><option>التأمينات العامة</option></select>
+    <input id="cd_q" placeholder="بحث في كافة الشروط..." style="max-width:240px">
+   </div>
+  </div>
+  <div class="scroll"><table><thead><tr><th id="cd_chk_th" style="width:40px;text-align:center"><input type="checkbox" id="cd_all_chk" title="تحديد الكل" style="width:16px;height:16px;cursor:pointer"></th><th style="width:40px">#</th><th>عنوان الشرط</th><th>النوع</th><th>القسم</th><th>نص الشرط</th><th>المصدر</th><th id="cd_act_th" style="min-width:110px;white-space:nowrap">إدارة <button class="btn sm red" id="cd_del_sel" hidden style="padding:2px 6px;font-size:.75rem;margin-right:4px">حذف المحدد</button></th></tr></thead><tbody id="cd_rows"></tbody></table></div>
+  <div id="cd_cnt" style="color:var(--mut);font-size:.85rem;margin-top:8px"></div>
+ </div>
+</section>
 </main>
 <div id="pwmod" class="modal" hidden><div class="mbox" style="max-width:480px">
  <div class="mhd"><span>تغيير كلمة المرور</span><button class="mx" id="pw_x" title="إغلاق">✕</button></div>
@@ -579,7 +604,7 @@ function enter(){
  if(!isAdmin()&&(can("cust")||can("prod")||can("ast")))dep.push("التكويد");
  $("dep").textContent=dep.join(" + ")||"—";["st_cu","snewc"].forEach(i=>{$(i).hidden=!can("cust")});["st_pr","cu_t_pr"].forEach(i=>{$(i).hidden=!can("prod")});$("e_tabs").querySelector('[data-go="cust"]').hidden=!can("cust");
  $("hnote").textContent=ins.length?"اختر من القائمة العلوية: وثيقة ← نوع الوثيقة المراد إصدارها":(can("cust")||can("prod")||can("ast")?"استخدم القوائم المتاحة لك (التكويد / أصول الشركة)":"لا توجد صلاحيات إصدار لحسابك، تواصل مع المدير.");
- const M=[["وثيقة",ins.concat(ins.length&&can("cust")?[["cust","تكويد العملاء"]]:[],ins.length?[["upl","رفع المستندات"]]:[])],["التكويد",(can("cust")?[["cust","تكويد العملاء"]]:[]).concat(can("prod")?[["prods","تكويد المنتجين"]]:[])],["أصول الشركة",can("ast")?[["ast","إدخال باركود الأصول"]]:[]],["الملاحق",ins.length?[["end_chg","ملحق تغييرات عامة"],["end_add","ملحق إضافة"],["end_ext","ملحق مد فترة التأمين"],["end_red","ملحق تقليل فترة التأمين"],["end_ren","ملحق تجديد وثيقة"],["end_int","ملحق إسناد داخلي"],["end_cls","ملحق إلغاء بالتصفية"],["end_clsf","ملحق إلغاء مع استرجاع القسط"],["end_list","سجل الملاحق"]]:[]],["التعويضات",(ins.length&&can("clm")?[["clm","إنشاء تعويض"]]:[]).concat(can("rep")?[["crep","تقارير التعويضات"]]:[])],["الطباعة",[["prt","نموذج الطباعة"]]],["التقارير",can("rep")?[["rep","عرض التقرير"]]:[]],["أشياء أخرى",isAdmin()?[["usr","المستخدمون والصلاحيات"],["sec","سجل الأمان"]]:[]],["إعادة التأمين",isAdmin()?[["ri","إضافة اتفاقية"]]:[]]];
+ const M=[["وثيقة",ins.concat(ins.length&&can("cust")?[["cust","تكويد العملاء"]]:[],ins.length?[["upl","رفع المستندات"]]:[])],["التكويد",(can("cust")?[["cust","تكويد العملاء"]]:[]).concat(can("prod")?[["prods","تكويد المنتجين"]]:[])],["أصول الشركة",can("ast")?[["ast","إدخال باركود الأصول"]]:[]],["الملاحق",ins.length?[["end_chg","ملحق تغييرات عامة"],["end_add","ملحق إضافة"],["end_ext","ملحق مد فترة التأمين"],["end_red","ملحق تقليل فترة التأمين"],["end_ren","ملحق تجديد وثيقة"],["end_int","ملحق إسناد داخلي"],["end_cls","ملحق إلغاء بالتصفية"],["end_clsf","ملحق إلغاء مع استرجاع القسط"],["end_list","سجل الملاحق"]]:[]],["التعويضات",(ins.length&&can("clm")?[["clm","إنشاء تعويض"]]:[]).concat(can("rep")?[["crep","تقارير التعويضات"]]:[])],["الشروط",[["conds","قائمة الشروط المعتمدة"]]],["الطباعة",[["prt","نموذج الطباعة"]]],["التقارير",can("rep")?[["rep","عرض التقرير"]]:[]],["أشياء أخرى",isAdmin()?[["usr","المستخدمون والصلاحيات"],["sec","سجل الأمان"]]:[]],["إعادة التأمين",isAdmin()?[["ri","إضافة اتفاقية"]]:[]]];
  $("menu").innerHTML='<div class="mi"><button class="d" data-k="home">المنزل</button></div>'+M.filter(m=>m[1].length).map(([t,it])=>`<div class="mi"><button>${t}</button><div class="dd">${it.map(([k,l])=>`<button data-k="${k}"${k?"":" disabled"}>${l}</button>`).join("")}</div></div>`).join("");
  $("menu").querySelectorAll(".mi>button").forEach(b=>b.onclick=e=>{e.stopPropagation();if(b.dataset.k){closeM();show(b.dataset.k);return}const p=b.parentNode,o=p.classList.contains("open");closeM();if(!o)p.classList.add("open")});
  $("menu").querySelectorAll(".dd button").forEach(b=>b.onclick=()=>{closeM();show(b.dataset.k)});
@@ -591,10 +616,10 @@ document.addEventListener("click",closeM);
 $("ttl").onclick=$("logo").onclick=()=>{if(me)show("home")};
 function show(k){
  if(k=="prods"){openProd();return}if(k=="cust"&&!can("cust"))return;if(k=="ast"&&!can("ast"))return;if((k=="rep"||k=="crep")&&!can("rep"))return;edit=null;const sr=k=="sgen"||k=="scar",ins=k=="gen"||k=="car";
- $("p-home").hidden=k!="home";$("p-search").hidden=!sr;$("p-ins").hidden=!ins;$("p-rep").hidden=k!="rep";$("p-usr").hidden=k!="usr";$("p-clm").hidden=k!="clm";$("p-crep").hidden=k!="crep";$("p-ri").hidden=k!="ri";$("p-end").hidden=!k.startsWith("end_");$("p-prt").hidden=k!="prt";$("p-upl").hidden=k!="upl";$("p-cust").hidden=k!="cust";$("p-sec").hidden=k!="sec";$("p-ast").hidden=k!="ast";$("p-terms").hidden=true;$("p-prem").hidden=true;
+ $("p-home").hidden=k!="home";$("p-search").hidden=!sr;$("p-ins").hidden=!ins;$("p-rep").hidden=k!="rep";$("p-usr").hidden=k!="usr";$("p-clm").hidden=k!="clm";$("p-crep").hidden=k!="crep";$("p-ri").hidden=k!="ri";$("p-end").hidden=!k.startsWith("end_");$("p-prt").hidden=k!="prt";$("p-upl").hidden=k!="upl";$("p-cust").hidden=k!="cust";$("p-sec").hidden=k!="sec";$("p-ast").hidden=k!="ast";$("p-conds").hidden=k!="conds";$("p-terms").hidden=true;$("p-prem").hidden=true;
  if(sr){cur=k.slice(1);searchUI()}
  if(ins){cur=k;build()}
- if(k=="rep")report();if(k=="usr")renderUsers();if(k.startsWith("end_"))endUI(k.slice(4));if(k=="prt")prtUI();if(k=="upl")uplUI();if(k=="cust")cuUI();if(k=="sec")secUI();if(k=="ast")astUI();if(k=="clm")clmUI();if(k=="ri")riUI();if(k=="crep")crep();
+ if(k=="rep")report();if(k=="usr")renderUsers();if(k.startsWith("end_"))endUI(k.slice(4));if(k=="prt")prtUI();if(k=="upl")uplUI();if(k=="cust")cuUI();if(k=="sec")secUI();if(k=="ast")astUI();if(k=="clm")clmUI();if(k=="ri")riUI();if(k=="crep")crep();if(k=="conds")condsUI();
  window.scrollTo(0,0);
 }
 
@@ -607,13 +632,13 @@ const MODELS={"تويوتا":"كورولا،يارس،كامري،راف فور�
 let lastB=null;
 const common=[["name","اسم المؤمَّن له","text"],["addr","العنوان","text"]];
 const F={
-gen:[...common,["kind","نوع التأمين","select",Object.keys(GEN)],["item","وصف الشيء المؤمَّن عليه","text"],["place","موقع الخطر","text"],["sum","مبلغ التأمين (ج.م)","number"],["start","بداية التأمين","date"],["months","المدة (شهر)","number"],["bene","المستفيد (اختياري)","text"]],
-car:[...common,["plate","رقم اللوحة","text"],["brand","الماركة","select",BRANDS],["model","الموديل","text"],["year","سنة الصنع","number"],["chassis","رقم الشاسيه","text"],["motor","رقم الموتور","text"],["color","اللون","text"],["use","نوع التأمين","select",Object.keys(KINDS)],["cover","مستوى التغطية (للخاص والتجاري)","select",Object.keys(COVER)],["sum","قيمة السيارة (ج.م)","number"],["start","بداية التأمين","date"],["months","المدة (شهر)","number"]]};
+gen:[...common,["kind","نوع التأمين","select",Object.keys(GEN)],["item","وصف الشيء المؤمَّن عليه","text"],["place","موقع الخطر","text"],["sum","مبلغ التأمين (ج.م)","number"],["start","بداية التأمين","date"],["months","المدة (شهر)","number"],["bene","اسم المستفيد","text"]],
+car:[...common,["plate","رقم اللوحة","text"],["brand","الماركة","select",BRANDS],["model","الموديل","text"],["year","سنة الصنع","number"],["chassis","رقم الشاسيه","text"],["motor","رقم الموتور","text"],["color","اللون","text"],["use","نوع التأمين","select",Object.keys(KINDS)],["cover","مستوى التغطية (للخاص والتجاري)","select",Object.keys(COVER)],["sum","قيمة السيارة (ج.م)","number"],["start","بداية التأمين","date"],["months","المدة (شهر)","number"],["bene","اسم المستفيد","text"]]};
 F.car.push(["fuel","الوقود","select",["","بنزين","سولار","غاز طبيعي","كهرباء","هجين"]],["cyl","عدد السلندرات","number"],["body","شكل الهيكل","select",["","سيدان","هاتشباك","ستيشن","SUV","كروس أوفر","كوبيه","كشف","بيك أب","ميكروباص","أخرى"]],["cond","جديدة / مستعملة","select",["","جديدة","مستعملة"]],["cc","السعة اللترية (cc)","number"],["pax","عدد الركاب","number"],["prev","شركة التأمين السابقة","text"],["gov","المحافظة","select",["","القاهرة","الجيزة","الإسكندرية","القليوبية","الشرقية","الدقهلية","الغربية","المنوفية","البحيرة","كفر الشيخ","دمياط","بورسعيد","الإسماعيلية","السويس","شمال سيناء","جنوب سيناء","الفيوم","بني سويف","المنيا","أسيوط","سوهاج","قنا","الأقصر","أسوان","البحر الأحمر","الوادي الجديد","مطروح"]],["dedt","نوع التحمل","select",["","بدون تحمل","عن كل حادث (مبلغ)","نسبة من الخسارة"]],["dedp","نسبة التحمل %","number"],["dedv","قيمة التحمل (ج.م)","number"]);
 ["gen","car"].forEach(k=>F[k].push(["insured","اسم المؤمَّن عليه","text"],["ptype","نوع العميل","select",["","فردي","شركة"]],["prod","الحالة الإنتاجية","text"]));
 const OPT=["insured","ptype","prod","fuel","cyl","body","cond","cc","pax","prev","gov","dedt","dedp","dedv","bene"];
 const REQ={gen:["name","addr","kind","item","place","sum","start","months"],car:["name","addr","use","brand","model","year","plate","chassis","motor","color","sum","start","months"]};
-const LAY={hd:["months","name","addr","start"],body:{gen:["insured","ptype","prod","kind","item","place","sum","bene"],car:["insured","ptype","prod","use","cover","brand","model","year","plate","chassis","motor","color","fuel","cyl","body","cond","cc","pax","prev","gov","dedt","dedp","dedv","sum"]}};
+const LAY={hd:["months","name","addr","start"],body:{gen:["insured","ptype","prod","kind","item","place","sum","bene"],car:["insured","ptype","prod","use","cover","brand","model","year","plate","chassis","motor","color","fuel","cyl","body","cond","cc","pax","prev","gov","dedt","dedp","dedv","sum","bene"]}};
 const dedText=f=>{if(!f.dedt||f.dedt=="بدون تحمل")return"";return f.dedt+(+f.dedp?" — "+f.dedp+"% من قيمة الخسارة":"")+(+f.dedv?" — "+f.dedv+" ج.م":"")};
 const T={gen:"بيانات وثيقة التأمينات العامة",car:"بيانات وثيقة تأمين السيارة"};
 const v=id=>$("f_"+id).value.trim();
@@ -802,10 +827,22 @@ const CAR_P=[
 "شرط التجديد: من المعلوم والمتفق عليه أنه في حالة وقوع حادث خلال الفترة من تاريخ تحرير التجديد وتاريخ بداية سريان التجديد، والذي يخص فترة التأمين السابقة، سيتم تعديل شروط وأسعار التأمين وفقًا لنسبة الخسارة المحققة."+KEEP,
 "شرط الوسائد الهوائية (إيرباج): من المعلوم والمتفق عليه صراحة أنه في حالة وقوع حادث للسيارة المؤمن عليها يؤدي إلى تلف الإيرباج ومشتملاتها، يتحمل المشترك نسبة 25% من قيمة الإيرباج ومشتملاتها في حالة الخسارة الجزئية فقط، ولا يطبق هذا التحمل في حالة الهلاك الكلي للسيارة."+KEEP,
 "شرط زجاج فتحة السقف / الزجاج البانوراما: من المعلوم والمتفق عليه صراحة أنه في حالة وقوع حادث للسيارة المؤمن عليها يؤدي إلى تلف / كسر / نقر زجاج فتحة السقف / الزجاج البانوراما ومشتملاتها في حالة الخسارة الكلية والجزئية، يتحمل المؤمن له نسبة 25% من قيمة زجاج فتحة السقف / الزجاج البانوراما."+KEEP];
+const CAR_C=[
+"شرط الأجزاء غير المثبتة: من المعلوم والمتفق عليه صراحة أن أجزاء السيارة غير المثبتة بها، والتي يمكن للمشترك حملها أثناء مغادرته للسيارة، غير مغطاة تأمينيًا."+KEEP,
+"شرط التجديد: من المعلوم والمتفق عليه أنه في حالة وقوع حادث خلال الفترة من تاريخ تحرير التجديد وتاريخ بداية سريان التجديد، والذي يخص فترة التأمين السابقة، سيتم تعديل شروط وأسعار التأمين وفقًا لنسبة الخسارة المحققة."+KEEP,
+"شرط الاستهلاكات: من المعلوم والمتفق عليه صراحة أن الاستهلاك على الأجزاء الكهربائية والميكانيكية والعفشة وفقًا لقرار الهيئة العامة للرقابة المالية رقم 1052 لسنة 2019 طبقًا للنسب الآتية: السنة الأولى 2.5%، السنة الثانية 5%، السنة الثالثة 10%، السنة الرابعة 15%، السنة الخامسة وما بعدها 20%، الكاوتش والبطاريات 25% للسنة الأولى مع العلم أن الحد الأقصى للاستهلاك سنتين بحد أقصى 50%، في حالة وجود بارومة 50% للجزء الذي به بارومة، صنفرة أو ترميل الزجاج من أثر الطريق 50%، من المعلوم والمتفق عليه أنه في حالة عدم تسليم التالف للشركة سيتم خصم 2.5% من إجمالي قيمة قطع الغيار التي تم تغييرها أو استبدالها."];
+const DEF_EX_MSG="من المعلوم والمتفق عليه صراحة أنه يُستثنى من التأمين التلفيات الواردة بتقرير معاينة الإصدار المرفقة، وتبقى باقي الشروط والاشتراطات الواردة بالوثيقة كما هي دون أي تعديل أو تغيير.";
 const GX={"تأمين الممتلكات وسكن الأسرة":["يشمل التأمين المسكن ومحتوياته المبيَّنة بالوثيقة وفق البنود والتغطيات المختارة فقط.","لا يغطي التأمين المجوهرات والنقدية والمقتنيات الثمينة ما لم يُنص عليها صراحة وتُحدَّد قيمتها.","يلتزم المؤمَّن له بإبلاغ الشركة فورًا بأي تغيير في استخدام المسكن أو إخلائه لمدة تزيد على 60 يومًا."],"تأمين المسئولية المدنية":["يغطي التأمين مسؤولية المؤمَّن له القانونية عن الأضرار الجسدية والمادية التي تلحق بالغير خلال مدة التأمين.","لا يغطي التأمين الأضرار العمدية ولا الغرامات والعقوبات الجنائية.","لا يجوز للمؤمَّن له الاعتراف بالمسؤولية أو إجراء أي تسوية أو وعد بالتعويض دون موافقة كتابية مسبقة من الشركة."]};
 function defTerms(c,f){
+ const delSet=new Set(typeof delBuiltInConds!=="undefined"?delBuiltInConds:[]);
  const base=c=="car"?["تسري الوثيقة على السيارة الموضحة بياناتها خلال مدة التأمين المحددة.","يلتزم المؤمَّن له بإبلاغ الشركة بأي حادث خلال 48 ساعة.","نوع التأمين «"+f.use+"»"+(f.cover&&f.cover!="—"?" بمستوى تغطية «"+f.cover+"»":"")+" وفق الشروط العامة والاستثناءات المرفقة.","لا تسري الوثيقة إذا استُخدمت السيارة في غير الغرض المبيَّن بها.","يحق للشركة إلغاء الوثيقة عند ثبوت تقديم بيانات غير صحيحة."]:["تغطي الوثيقة الأخطار المؤمَّن ضدها فقط خلال مدة التأمين.","يلتزم المؤمَّن له باتخاذ الاحتياطات المعقولة لمنع وقوع الخسارة.","يجب إخطار الشركة فور وقوع أي حادث أو خسارة.","يُحدد التعويض على أساس القيمة الفعلية بما لا يتجاوز مبلغ التأمين.","يحق للشركة إلغاء الوثيقة عند ثبوت تقديم بيانات غير صحيحة."];
- return base.concat(c=="gen"?(GX[f.kind]||[]):[],c=="car"&&f.use!="إجباري"?CAR_X.concat(f.use=="خاص"?CAR_P:[]):[],["تسري الوثيقة داخل جمهورية مصر العربية ما لم يُنص على غير ذلك."]);
+ const allC=typeof getAllConds==="function"?getAllConds():[];
+ const customAdded=allC.filter(x=>x.custom&&x.type!=="exception").filter(x=>x.cat=="الكل"||(c=="car"?(x.cat=="تأمين السيارات"||(f.use=="خاص"&&x.cat=="سيارات - خاص")||(f.use=="تجاري"&&x.cat=="سيارات - تجاري")||(f.use=="إجباري"&&x.cat=="سيارات - إجباري")):(x.cat=="التأمينات العامة"||x.cat==("عام - "+f.kind)))).map(x=>x.title+(x.text?": "+x.text:""));
+ const fCX=CAR_X.filter((_,i)=>!delSet.has("b_cx_"+i));
+ const fCP=CAR_P.filter((_,i)=>!delSet.has("b_cp_"+i));
+ const fCC=CAR_C.filter((_,i)=>!delSet.has("b_cc_"+i));
+ const fGX=(GX[f.kind]||[]).filter((_,i)=>!delSet.has("b_gx_"+f.kind+"_"+i));
+ return base.concat(c=="gen"?fGX:[],c=="car"&&f.use!="إجباري"?fCX.concat(f.use=="خاص"?fCP:f.use=="تجاري"?fCC:[]):[],customAdded,["تسري الوثيقة داخل جمهورية مصر العربية ما لم يُنص على غير ذلك."]);
 }
 function tmCnt(){const r=[...$("tm_list").querySelectorAll(".trow")];$("tm_cnt").textContent=" — المحدد "+r.filter(x=>x.querySelector("[data-c]").checked).length+" من "+r.length}
 function termsLock(){const e=!isAdmin();$("tm_add").hidden=e;$("tm_list").querySelectorAll("[data-t]").forEach(i=>{i.readOnly=e});$("tm_list").querySelectorAll("[data-x]").forEach(b=>{b.hidden=e});["tm_ded","tm_sp","tm_ex"].forEach(i=>{$(i).readOnly=e})}
@@ -816,7 +853,10 @@ function termsUI(){
  $("tm_info").textContent=f.name+" — "+(cur=="car"?f.use+" — "+f.plate:f.kind);
  const T=edit&&edit.orig.tm;
  {const D=defTerms(cur,f);$("tm_list").innerHTML=T?T.list.map(x=>termRow(x,true)).join("")+D.filter(x=>!T.list.includes(x)).map(x=>termRow(x,false)).join(""):D.map(x=>termRow(x,true)).join("")}
- $("tm_ded").value=T?T.ded||"":dedText(f);$("tm_sp").value=T?T.sp||"":"";$("tm_ex").value=T?T.ex||"":"";
+ const customEx=(typeof getAllConds==="function"?getAllConds():[]).filter(x=>x.custom&&x.type==="exception").filter(x=>x.cat=="الكل"||(cur=="car"?(x.cat=="تأمين السيارات"||(f.use=="خاص"&&x.cat=="سيارات - خاص")||(f.use=="تجاري"&&x.cat=="سيارات - تجاري")||(f.use=="إجباري"&&x.cat=="سيارات - إجباري")):(x.cat=="التأمينات العامة"||x.cat==("عام - "+f.kind)))).map(x=>x.title+(x.text?": "+x.text:""));
+ const hasDefEx=!(typeof delBuiltInConds!=="undefined"&&delBuiltInConds.includes("b_ex_1"));
+ const defEx=cur=="car"&&f.use!="إجباري"?(hasDefEx?[DEF_EX_MSG]:[]).concat(customEx).join("\n"):customEx.join("\n");
+ $("tm_ded").value=T?T.ded||"":dedText(f);$("tm_sp").value=T?T.sp||"":"";$("tm_ex").value=T?T.ex||"":defEx;
  tmCnt();termsLock();$("p-ins").hidden=true;$("p-terms").hidden=false;window.scrollTo(0,0);
 }
 $("tm_list").onclick=e=>{const b=e.target.closest("[data-x]");if(b&&isAdmin()){b.parentNode.remove();tmCnt()}};
@@ -1432,7 +1472,7 @@ $("w_ok").onclick=()=>{
 let ends=ld("ins_end",[]),et=null;
 const ET={chg:"ملحق تغييرات عامة",add:"ملحق إضافة",ext:"ملحق مد فترة التأمين",red:"ملحق تقليل فترة التأمين",ren:"ملحق تجديد وثيقة",int:"ملحق إسناد داخلي",cls:"ملحق إلغاء بالتصفية",clsf:"ملحق إلغاء مع استرجاع القسط"};
 const pctFees=FEES.reduce((n,x)=>n+(x[1]||0),0);
-const FLD={all:[["name","اسم المؤمَّن له"],["addr","العنوان"]],car:[["plate","رقم اللوحة"],["chassis","رقم الشاسيه"],["motor","رقم الموتور"],["color","اللون"],["model","الموديل"],["year","سنة الصنع"]],gen:[["item","وصف الشيء المؤمَّن عليه"],["place","موقع الخطر"],["bene","المستفيد"]]};
+const FLD={all:[["name","اسم المؤمَّن له"],["addr","العنوان"]],car:[["plate","رقم اللوحة"],["chassis","رقم الشاسيه"],["motor","رقم الموتور"],["color","اللون"],["model","الموديل"],["year","سنة الصنع"],["bene","المستفيد"]],gen:[["item","وصف الشيء المؤمَّن عليه"],["place","موقع الخطر"],["bene","المستفيد"]]};
 const eDocs=()=>myDocs().filter(d=>!d.closed);
 const eDoc=()=>eDocs().find(d=>d.no==$("e_p").value.trim());
 function endUI(t){
@@ -1656,6 +1696,120 @@ $("madd").onclick=async()=>{
  if(!users.length){const a0={n:"مدير النظام",u:"admin",role:"مدير",def:true};await setPw(a0,"admin123");users=[a0];sv("ins_users",users)}
  users.forEach(u=>{if(u.u=="admin")u.role="مدير"});mode="login";authUI();
 })();
+
+/* ---------- conditions tab (all system & custom conditions for manager & employee; add/delete for manager only) ---------- */
+let sysConds=ld("ins_conds_v2",[]);
+let delBuiltInConds=ld("ins_conds_del_v2",[]);
+function splitCondStr(s){
+ const i=s.indexOf(":");
+ if(i>0&&i<65)return{title:s.slice(0,i).trim(),text:s.slice(i+1).trim()};
+ return{title:"شرط عام",text:s.trim()};
+}
+function getBuiltInConds(){
+ const list=[];
+ list.push({id:"b_ex_1",custom:false,type:"exception",cat:"تأمين السيارات",title:"شروط الاستثناءات (تقرير المعاينة)",text:DEF_EX_MSG,by:"شروط المنظومة الأساسية"});
+ CAR_X.forEach((s,i)=>{const p=splitCondStr(s);list.push({id:"b_cx_"+i,custom:false,type:"general",cat:"تأمين السيارات",title:p.title,text:p.text,by:"شروط المنظومة الأساسية"})});
+ CAR_P.forEach((s,i)=>{const p=splitCondStr(s);list.push({id:"b_cp_"+i,custom:false,type:"general",cat:"سيارات - خاص",title:p.title,text:p.text,by:"شروط المنظومة الأساسية"})});
+ CAR_C.forEach((s,i)=>{const p=splitCondStr(s);list.push({id:"b_cc_"+i,custom:false,type:"general",cat:"سيارات - تجاري",title:p.title,text:p.text,by:"شروط المنظومة الأساسية"})});
+ Object.entries(GX).forEach(([k,arr])=>{
+  arr.forEach((s,i)=>{const p=splitCondStr(s);list.push({id:"b_gx_"+k+"_"+i,custom:false,type:"general",cat:"التأمينات العامة",title:p.title+" ("+k+")",text:p.text,by:"شروط المنظومة الأساسية"})});
+ });
+ return list.filter(x=>!delBuiltInConds.includes(x.id));
+}
+function getAllConds(){
+ return [...sysConds.map(x=>({...x,custom:true})),...getBuiltInConds()];
+}
+function deleteCondsByIds(ids){
+ const idSet=new Set(ids.map(String));
+ sysConds=sysConds.filter(x=>!idSet.has(String(x.id)));
+ sv("ins_conds_v2",sysConds);
+ ids.forEach(id=>{
+  const sid=String(id);
+  if(sid.startsWith("b_")&&!delBuiltInConds.includes(sid))delBuiltInConds.push(sid);
+ });
+ sv("ins_conds_del_v2",delBuiltInConds);
+}
+function condsUI(){
+ const adm=isAdmin();
+ $("cd_add_box").hidden=!adm;
+ $("cd_chk_th").hidden=!adm;
+ $("cd_act_th").hidden=!adm;
+ $("cd_q").value="";
+ $("cd_fcat").value="";
+ $("cd_err").textContent="";
+ condsList();
+}
+function getSelectedCondIds(){
+ return [...document.querySelectorAll(".cd-chk:checked")].map(x=>x.dataset.id);
+}
+function updateDelSelBtn(){
+ const btn=$("cd_del_sel");
+ if(!btn)return;
+ const ids=getSelectedCondIds();
+ btn.hidden=ids.length===0;
+ btn.textContent="حذف المحدد ("+ids.length+")";
+}
+function condsList(){
+ const adm=isAdmin(),q=$("cd_q").value.trim().toLowerCase(),fc=$("cd_fcat").value;
+ const all=getAllConds();
+ const l=all.filter(x=>(!fc||x.cat===fc)&&(!q||[x.title,x.text,x.cat,x.by].some(v=>String(v||"").toLowerCase().includes(q))));
+ $("cd_rows").innerHTML=l.length?l.map((x,i)=>`<tr>
+  ${adm?`<td style="text-align:center"><input type="checkbox" class="cd-chk" data-id="${esc(x.id)}" style="width:16px;height:16px;cursor:pointer"></td>`:""}
+  <td>${i+1}</td>
+  <td><b>${esc(x.title)}</b></td>
+  <td>${x.type==="exception"?'<span style="color:#c0392b;font-weight:600">استثناءات</span>':'شروط عامة'}</td>
+  <td>${esc(x.cat)}</td>
+  <td style="white-space:pre-line">${esc(x.text)}</td>
+  <td>${esc(x.by||"—")}${x.date?" ("+esc(x.date)+")":""}</td>
+  ${adm?`<td style="white-space:nowrap"><button class="btn sm red" data-cdel="${esc(x.id)}">🗑 حذف</button></td>`:""}
+ </tr>`).join(""):'<tr><td colspan="'+(adm?8:6)+'">لا توجد شروط مطابقة</td></tr>';
+ $("cd_cnt").textContent="إجمالي الشروط المعروضة: "+l.length+" من "+all.length+(adm?"":" (للعرض فقط — صلاحية الإضافة والحذف للمدير فقط)");
+ const allChk=$("cd_all_chk");if(allChk)allChk.checked=false;
+ updateDelSelBtn();
+ if(adm){
+  $("cd_rows").querySelectorAll(".cd-chk").forEach(chk=>chk.onchange=updateDelSelBtn);
+  if(allChk)allChk.onchange=()=>{
+   const st=allChk.checked;
+   $("cd_rows").querySelectorAll(".cd-chk").forEach(c=>c.checked=st);
+   updateDelSelBtn();
+  };
+  const delSelBtn=$("cd_del_sel");
+  if(delSelBtn){
+   delSelBtn.onclick=()=>{
+    if(!isAdmin())return;
+    const ids=getSelectedCondIds();
+    if(!ids.length)return;
+    if(!delSelBtn.dataset.s){
+     delSelBtn.dataset.s="1";
+     delSelBtn.textContent="تأكيد حذف ("+ids.length+")؟";
+     return;
+    }
+    delSelBtn.dataset.s="";
+    deleteCondsByIds(ids);
+    condsList();
+   };
+  }
+  $("cd_rows").querySelectorAll("[data-cdel]").forEach(b=>b.onclick=()=>{
+   if(!isAdmin())return;
+   if(!b.dataset.s){b.dataset.s="1";b.textContent="تأكيد الحذف؟";return}
+   deleteCondsByIds([b.dataset.cdel]);
+   condsList();
+  });
+ }
+}
+$("cd_q").addEventListener("input",condsList);
+$("cd_fcat").addEventListener("change",condsList);
+$("cd_clr").onclick=()=>{$("cd_title").value="";$("cd_text").value="";$("cd_cat").value="الكل";$("cd_type").value="general";$("cd_err").textContent=""};
+$("cd_save").onclick=()=>{
+ if(!isAdmin()){$("cd_err").textContent="عذراً، صلاحية إضافة الشروط متاحة للمدير فقط.";return}
+ const title=$("cd_title").value.trim(),text=$("cd_text").value.trim(),cat=$("cd_cat").value,type=$("cd_type").value,e=$("cd_err");
+ if(!title||!text){e.textContent="أدخل عنوان الشرط ونص الشرط بالكامل";return}
+ sysConds.unshift({id:Date.now(),cat,type,title,text,by:me.n,date:today()});
+ sv("ins_conds_v2",sysConds);
+ $("cd_title").value="";$("cd_text").value="";$("cd_cat").value="الكل";$("cd_type").value="general";
+ condsList();
+ e.innerHTML='<span class="ok">تمت إضافة الشرط وحفظه في قائمة الشروط وسيُدرج تلقائياً في الوثائق</span>';
+};
 </script>
 </body>
 </html>
